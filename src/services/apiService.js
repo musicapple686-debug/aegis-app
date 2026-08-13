@@ -248,17 +248,30 @@ export const createTask = async (title, type = 'everyday') => {
   }
 };
 
-export const updateTaskStatus = async (id, status) => {
+export const updateTask = async (id, updates) => {
   try {
     const res = await fetch(`${API_URL}/api/tasks/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status })
+      body: JSON.stringify(updates)
     });
     if (!res.ok) throw new Error("Failed to update task");
     return await res.json();
   } catch (e) {
     console.error("Error updating task", e);
+    throw e;
+  }
+};
+
+export const deleteTask = async (id) => {
+  try {
+    const res = await fetch(`${API_URL}/api/tasks/${id}`, {
+      method: 'DELETE'
+    });
+    if (!res.ok) throw new Error("Failed to delete task");
+    return await res.json();
+  } catch (e) {
+    console.error("Error deleting task", e);
     throw e;
   }
 };

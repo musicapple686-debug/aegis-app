@@ -15,6 +15,8 @@ const ACCENT_COLORS = [
 export default function SettingsModal({ visible, onClose, accentColor, setAccentColor }) {
   const [newPin, setNewPin] = useState('');
   const [pinSaved, setPinSaved] = useState(false);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
   useEffect(() => {
     if (visible) {
@@ -40,8 +42,10 @@ export default function SettingsModal({ visible, onClose, accentColor, setAccent
   };
 
   const handleExportData = () => {
-    // Assuming backend is hosted on the fixed IP
-    const exportUrl = 'http://54.209.56.53/api/export';
+    let exportUrl = 'http://54.209.56.53/api/export?';
+    if (startDate.trim()) exportUrl += `start=${startDate.trim()}&`;
+    if (endDate.trim()) exportUrl += `end=${endDate.trim()}&`;
+    
     Linking.openURL(exportUrl).catch(err => {
       console.error("Failed to open URL:", err);
       alert("Failed to export data.");
@@ -99,6 +103,24 @@ export default function SettingsModal({ visible, onClose, accentColor, setAccent
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Data Management</Text>
               <Text style={styles.desc}>Download your God-Tier Master Journal. Includes 18 tabs containing your entire chronological timeline and all raw database collections.</Text>
+              
+              <View style={styles.dateRow}>
+                <TextInput 
+                  style={styles.dateInput} 
+                  placeholder="Start (YYYY-MM-DD)"
+                  placeholderTextColor="#666"
+                  value={startDate}
+                  onChangeText={setStartDate}
+                />
+                <TextInput 
+                  style={styles.dateInput} 
+                  placeholder="End (YYYY-MM-DD)"
+                  placeholderTextColor="#666"
+                  value={endDate}
+                  onChangeText={setEndDate}
+                />
+              </View>
+
               <TouchableOpacity 
                 style={[styles.saveBtn, { backgroundColor: '#FF9500', paddingVertical: 14, marginTop: 8 }]} 
                 onPress={handleExportData}
@@ -128,5 +150,7 @@ const styles = StyleSheet.create({
   saveBtn: { justifyContent: 'center', paddingHorizontal: 20, borderRadius: 8 },
   saveBtnText: { color: '#fff', fontWeight: 'bold' },
   colorGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
-  colorBox: { width: 50, height: 50, borderRadius: 25, borderWidth: 3, justifyContent: 'center', alignItems: 'center' }
+  colorBox: { width: 50, height: 50, borderRadius: 25, borderWidth: 3, justifyContent: 'center', alignItems: 'center' },
+  dateRow: { flexDirection: 'row', gap: 12, marginBottom: 12 },
+  dateInput: { flex: 1, backgroundColor: '#121212', borderWidth: 1, borderColor: '#333', color: '#fff', padding: 12, borderRadius: 8, fontSize: 14, textAlign: 'center' }
 });
