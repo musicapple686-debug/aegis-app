@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, TextInput } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, TextInput, ScrollView } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { getTasks, updateTaskStatus, createTask } from '../services/apiService';
@@ -25,7 +25,6 @@ export default function TaskCalendarScreen() {
 
   const toggleTask = async (id, currentStatus) => {
     const newStatus = currentStatus === 'pending' ? 'completed' : 'pending';
-    // Optimistic UI update
     setTasks(prev => prev.map(t => t._id === id ? { ...t, status: newStatus } : t));
     await updateTaskStatus(id, newStatus);
     fetchTasks();
@@ -46,45 +45,50 @@ export default function TaskCalendarScreen() {
     }
   };
 
-  const getTaskColor = (type) => {
-    switch (type) {
-      case 'work': return '#007AFF';
-      case 'important': return '#FF3B30';
-      case 'everyday': return '#34C759';
-      default: return '#AF52DE';
-    }
-  };
-
-  const renderTask = ({ item }) => (
-    <TouchableOpacity 
-      style={[styles.taskCard, { borderLeftColor: getTaskColor(item.type) }]} 
-      onPress={() => toggleTask(item._id, item.status)}
-    >
-      <View style={styles.taskInfo}>
-        <Text style={[styles.taskTitle, item.status === 'completed' && styles.taskCompleted]}>
-          {item.title}
-        </Text>
-        <Text style={styles.taskType}>{item.type.toUpperCase()}</Text>
-      </View>
-      <Ionicons 
-        name={item.status === 'completed' ? "checkmark-circle" : "ellipse-outline"} 
-        size={24} 
-        color={item.status === 'completed' ? "#34C759" : "#666"} 
-      />
-    </TouchableOpacity>
+  const renderQuadrant = (title, qTasks, bgCol, borderCol) => (
+    <View style={[styles.quadrant, { backgroundColor: bgCol, borderColor: borderCol }]}>
+      <Text style={[styles.quadTitle, { color: borderCol }]}>{title}</Text>
+      <ScrollView nestedScrollEnabled showsVerticalScrollIndicator={false}>
+        {qTasks.length === 0 ? (
+          <Text style={styles.emptyText}>Clear.</Text>
+        ) : (
+          qTasks.map(t => (
+            <TouchableOpacity 
+              key={t._id} 
+              style={[styles.taskItem]} 
+              onPress={() => toggleTask(t._id, t.status)}
+            >
+              <Ionicons 
+                name={t.status === 'completed' ? "checkmark-circle" : "ellipse-outline"} 
+                size={16} 
+                color={t.status === 'completed' ? borderCol : "#666"} 
+              />
+              <Text style={[styles.taskText, t.status === 'completed' && { textDecorationLine: 'line-through', color: '#666' }]}>
+                {t.title}
+              </Text>
+            </TouchableOpacity>
+          ))
+        )}
+      </ScrollView>
+    </View>
   );
+
+  const q1Tasks = tasks.filter(t => t.quadrant === 'Q1');
+  const q2Tasks = tasks.filter(t => t.quadrant === 'Q2' || !t.quadrant); 
+  const q3Tasks = tasks.filter(t => t.quadrant === 'Q3');
+  const q4Tasks = tasks.filter(t => t.quadrant === 'Q4');
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Daily Protocol</Text>
-        <Text style={styles.subtitle}>Prioritized by the Machine.</Text>
+        <Text style={styles.title}>Priority Matrix</Text>
+        <Text style={styles.subtitle}>Tasks automatically sorted by Aegis AI.</Text>
       </View>
 
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
-          placeholder="Add a new task manually..."
+          placeholder="Log a task. Aegis will place it..."
           placeholderTextColor="#666"
           value={newTaskTitle}
           onChangeText={setNewTaskTitle}
@@ -100,44 +104,33 @@ export default function TaskCalendarScreen() {
         </TouchableOpacity>
       </View>
 
-      {loading ? (
-        <ActivityIndicator color="#007AFF" size="large" style={{ marginTop: 40 }} />
-      ) : tasks.length === 0 ? (
-        <Text style={styles.emptyText}>No tasks for today. You are free.</Text>
-      ) : (
-        <FlatList
-          data={tasks}
-          keyExtractor={item => item._id}
-          renderItem={renderTask}
-          contentContainerStyle={styles.listContainer}
-        />
-      )}
+      <View style={styles.matrixContainer}>
+        <View style={styles.matrixRow}>
+          {renderQuadrant("DO (Q1)", q1Tasks, "rgba(255, 59, 48, 0.1)", "#FF3B30")}
+          {renderQuadrant("SCHEDULE (Q2)", q2Tasks, "rgba(52, 199, 89, 0.1)", "#34C759")}
+        </View>
+        <View style={styles.matrixRow}>
+          {renderQuadrant("DELEGATE (Q3)", q3Tasks, "rgba(255, 149, 0, 0.1)", "#FF9500")}
+          {renderQuadrant("ELIMINATE (Q4)", q4Tasks, "rgba(142, 142, 147, 0.1)", "#8E8E93")}
+        </View>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#121212' },
-  header: { padding: 24, paddingTop: 0, paddingBottom: 16 },
-  title: { fontSize: 28, fontWeight: 'bold', color: '#ffffff', marginBottom: 4 },
-  subtitle: { fontSize: 16, color: '#aaaaaa' },
-  listContainer: { paddingHorizontal: 24, paddingBottom: 100 },
-  taskCard: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    justifyContent: 'space-between',
-    backgroundColor: '#1e1e1e', 
-    padding: 16, 
-    borderRadius: 12, 
-    marginBottom: 12,
-    borderLeftWidth: 4
-  },
-  taskInfo: { flex: 1, paddingRight: 16 },
-  taskTitle: { fontSize: 18, color: '#ffffff', fontWeight: '500', marginBottom: 4 },
-  taskCompleted: { textDecorationLine: 'line-through', color: '#666' },
-  taskType: { fontSize: 12, color: '#888', fontWeight: 'bold' },
-  emptyText: { color: '#666', textAlign: 'center', marginTop: 40, fontSize: 16 },
-  inputContainer: { flexDirection: 'row', paddingHorizontal: 24, marginBottom: 16 },
-  input: { flex: 1, backgroundColor: '#1e1e1e', borderRadius: 12, padding: 16, color: '#fff', fontSize: 16, borderWidth: 1, borderColor: '#333' },
-  addButton: { width: 56, height: 56, backgroundColor: '#007AFF', borderRadius: 12, marginLeft: 12, justifyContent: 'center', alignItems: 'center' }
+  container: { flex: 1, backgroundColor: '#000', paddingTop: 60, paddingHorizontal: 16 },
+  header: { marginBottom: 20 },
+  title: { color: '#fff', fontSize: 28, fontWeight: '900', letterSpacing: 1 },
+  subtitle: { color: '#888', fontSize: 14, fontWeight: '600', marginTop: 4 },
+  inputContainer: { flexDirection: 'row', marginBottom: 20 },
+  input: { flex: 1, backgroundColor: '#1A1A1A', borderRadius: 12, padding: 16, color: '#fff', fontSize: 16, borderWidth: 1, borderColor: '#333' },
+  addButton: { width: 56, height: 56, backgroundColor: '#FF2D55', borderRadius: 12, marginLeft: 12, justifyContent: 'center', alignItems: 'center' },
+  matrixContainer: { flex: 1, marginBottom: 80 }, 
+  matrixRow: { flex: 1, flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 },
+  quadrant: { flex: 0.48, borderRadius: 16, padding: 12, borderWidth: 1 },
+  quadTitle: { fontSize: 12, fontWeight: '900', letterSpacing: 1, marginBottom: 12 },
+  taskItem: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
+  taskText: { color: '#fff', fontSize: 13, marginLeft: 8, flex: 1 },
+  emptyText: { color: '#555', fontSize: 12, fontStyle: 'italic', marginTop: 8 }
 });
