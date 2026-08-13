@@ -124,26 +124,28 @@ export default function MirrorScreen() {
         )}
       </ScrollView>
 
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Say anything..."
-          value={message}
-          onChangeText={setMessage}
-          placeholderTextColor="#666"
-          editable={!loading && !isRecording}
-        />
-        <TouchableOpacity 
-          style={[styles.micButton, isRecording && styles.micButtonRecording]} 
-          onPressIn={startRecording} 
-          onPressOut={stopRecording}
-          disabled={loading}
-        >
-          <Ionicons name="mic" size={24} color="#ffffff" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.sendButton} onPress={handleSend} disabled={loading || isRecording}>
-          <Text style={styles.sendButtonText}>Send</Text>
-        </TouchableOpacity>
+      <View style={styles.inputWrapper}>
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Say anything..."
+            value={message}
+            onChangeText={setMessage}
+            placeholderTextColor="#666"
+            editable={!loading && !isRecording}
+          />
+          <TouchableOpacity 
+            style={[styles.micButton, isRecording && styles.micButtonRecording]} 
+            onPressIn={startRecording} 
+            onPressOut={stopRecording}
+            disabled={loading}
+          >
+            <Ionicons name="mic" size={24} color="#ffffff" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.sendButton} onPress={handleSend} disabled={loading || isRecording}>
+            <Text style={styles.sendButtonText}>Send</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </KeyboardAvoidingView>
   );
@@ -162,10 +164,11 @@ const styles = StyleSheet.create({
   messageText: { fontSize: 16, lineHeight: 22 },
   userText: { color: '#ffffff' },
   modelText: { color: '#dddddd' },
-  inputContainer: { flexDirection: 'row', padding: 16, borderTopWidth: 1, borderTopColor: '#222', backgroundColor: '#121212', paddingBottom: Platform.OS === 'ios' ? 100 : 80 },
+  inputWrapper: { backgroundColor: '#121212', borderTopWidth: 1, borderTopColor: '#222', paddingBottom: Platform.OS === 'ios' ? 100 : 80 },
+  inputContainer: { flexDirection: 'row', padding: 16, alignItems: 'center' },
   input: { flex: 1, backgroundColor: '#1e1e1e', color: '#ffffff', borderRadius: 24, paddingHorizontal: 16, paddingVertical: 12, fontSize: 16, marginRight: 8 },
   micButton: { backgroundColor: '#333', borderRadius: 24, width: 48, height: 48, marginRight: 8, justifyContent: 'center', alignItems: 'center' },
   micButtonRecording: { backgroundColor: '#ff3b30' },
-  sendButton: { backgroundColor: '#007AFF', borderRadius: 24, paddingHorizontal: 20, justifyContent: 'center', alignItems: 'center' },
+  sendButton: { backgroundColor: '#007AFF', borderRadius: 24, paddingHorizontal: 20, paddingVertical: 12, justifyContent: 'center', alignItems: 'center' },
   sendButtonText: { color: '#ffffff', fontWeight: 'bold', fontSize: 16 }
 });

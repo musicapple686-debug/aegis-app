@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { getRules, getPatterns, getHabitStreaks } from '../services/apiService';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -14,6 +14,7 @@ const CATEGORY_COLORS = {
 };
 
 export default function HomeScreen() {
+  const navigation = useNavigation();
   const [rules, setRules] = useState([]);
   const [patterns, setPatterns] = useState([]);
   const [error, setError] = useState(null);
@@ -64,9 +65,33 @@ export default function HomeScreen() {
     <ScrollView style={styles.container} contentContainerStyle={{paddingBottom: 100}}>
       
       {/* HEADER */}
-      <View style={{ marginBottom: 32 }}>
-        <Text style={styles.title}>Welcome back.</Text>
-        <Text style={styles.subtitle}>Your personal Aegis system is online and ready.</Text>
+      <View style={{ marginBottom: 24, marginTop: 10 }}>
+        <Text style={styles.title}>Aegis OS</Text>
+        <Text style={styles.subtitle}>System Online. Welcome Commander.</Text>
+      </View>
+
+      {/* DASHBOARD GRID */}
+      <View style={styles.dashboardGrid}>
+        <TouchableOpacity style={styles.dashboardWidget} onPress={() => navigation.navigate('The Brain')}>
+          <View style={[styles.widgetIcon, { backgroundColor: 'rgba(0, 122, 255, 0.1)' }]}>
+             <Ionicons name="git-network" size={28} color="#007AFF" />
+          </View>
+          <Text style={styles.widgetText}>The Brain</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.dashboardWidget} onPress={() => navigation.navigate('Wallet')}>
+          <View style={[styles.widgetIcon, { backgroundColor: 'rgba(52, 199, 89, 0.1)' }]}>
+             <Ionicons name="wallet" size={28} color="#34C759" />
+          </View>
+          <Text style={styles.widgetText}>Wallet</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.dashboardWidget} onPress={() => navigation.navigate('Consult')}>
+          <View style={[styles.widgetIcon, { backgroundColor: 'rgba(175, 82, 222, 0.1)' }]}>
+             <Ionicons name="body" size={28} color="#AF52DE" />
+          </View>
+          <Text style={styles.widgetText}>Consult</Text>
+        </TouchableOpacity>
       </View>
 
       {/* HABITS SECTION */}
@@ -156,9 +181,19 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#121212', paddingHorizontal: 24, paddingTop: 24 },
-  title: { fontSize: 32, fontWeight: 'bold', color: '#ffffff', marginBottom: 4 },
-  subtitle: { fontSize: 16, color: '#aaaaaa' },
+  container: {
+    flex: 1,
+    backgroundColor: '#000',
+    paddingHorizontal: 20,
+    paddingTop: 60,
+  },
+  title: { fontSize: 32, fontWeight: '900', color: '#ffffff', letterSpacing: 1 },
+  subtitle: { fontSize: 14, color: '#888', fontWeight: '600', marginTop: 4 },
+  
+  dashboardGrid: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 32 },
+  dashboardWidget: { flex: 1, backgroundColor: '#1A1A1A', borderRadius: 16, padding: 16, alignItems: 'center', marginHorizontal: 4, borderWidth: 1, borderColor: '#333' },
+  widgetIcon: { width: 48, height: 48, borderRadius: 24, justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
+  widgetText: { color: '#fff', fontSize: 12, fontWeight: 'bold' },
   
   section: { marginBottom: 32 },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 16, borderBottomWidth: 1, borderBottomColor: '#222', paddingBottom: 8 },

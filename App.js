@@ -195,7 +195,7 @@ export default function App() {
       >
         <Tab.Screen name="Home" component={HomeScreen} />
         <Tab.Screen name="Tasks" component={TaskCalendarScreen} />
-        <Tab.Screen name="Wallet" component={FinanceScreen} />
+        <Tab.Screen name="Wallet" component={FinanceScreen} options={{ tabBarButton: () => null }} />
         <Tab.Screen 
           name="Capture" 
           component={View} 
@@ -221,8 +221,8 @@ export default function App() {
           }}
         />
         <Tab.Screen name="Alter Ego" component={MirrorScreen} />
-        <Tab.Screen name="The Brain" component={BrainScreen} />
-        <Tab.Screen name="Consult" component={BetterMeScreen} />
+        <Tab.Screen name="The Brain" component={BrainScreen} options={{ tabBarButton: () => null }} />
+        <Tab.Screen name="Consult" component={BetterMeScreen} options={{ tabBarButton: () => null }} />
         <Tab.Screen name="God Mode" component={GodProfileScreen} options={{ headerShown: false }} />
       </Tab.Navigator>
       <CaptureModal visible={captureVisible} onClose={() => setCaptureVisible(false)} />
