@@ -158,12 +158,12 @@ export const getSkills = async () => {
   }
 };
 
-export const getHabits = async () => {
+export const getHabitStreaks = async () => {
   try {
-    const res = await fetch(`${API_URL}/api/habits`);
+    const res = await fetch(`${API_URL}/api/habits/streaks`);
     return await res.json();
   } catch (e) {
-    console.error("Error fetching habits", e);
+    console.error("Error fetching habit streaks", e);
     return [];
   }
 };

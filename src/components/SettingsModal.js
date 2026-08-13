@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Modal, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Modal, ScrollView, Linking } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
@@ -37,6 +37,15 @@ export default function SettingsModal({ visible, onClose, accentColor, setAccent
   const handleSaveColor = async (color) => {
     setAccentColor(color);
     await AsyncStorage.setItem('aegis_color', color);
+  };
+
+  const handleExportData = () => {
+    // Assuming backend is hosted on the fixed IP
+    const exportUrl = 'http://54.209.56.53/api/export';
+    Linking.openURL(exportUrl).catch(err => {
+      console.error("Failed to open URL:", err);
+      alert("Failed to export data.");
+    });
   };
 
   return (
@@ -85,6 +94,20 @@ export default function SettingsModal({ visible, onClose, accentColor, setAccent
                   </TouchableOpacity>
                 ))}
               </View>
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Data Management</Text>
+              <Text style={styles.desc}>Download your God-Tier Master Journal. Includes 18 tabs containing your entire chronological timeline and all raw database collections.</Text>
+              <TouchableOpacity 
+                style={[styles.saveBtn, { backgroundColor: '#FF9500', paddingVertical: 14, marginTop: 8 }]} 
+                onPress={handleExportData}
+              >
+                <View style={{flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>
+                  <Ionicons name="download" size={20} color="#fff" style={{marginRight: 8}} />
+                  <Text style={styles.saveBtnText}>Export Master Journal (.xlsx)</Text>
+                </View>
+              </TouchableOpacity>
             </View>
           </ScrollView>
         </View>

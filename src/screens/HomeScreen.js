@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { getRules, getPatterns } from '../services/apiService';
+import { getRules, getPatterns, getHabitStreaks } from '../services/apiService';
 import { Ionicons } from '@expo/vector-icons';
 
 const CATEGORY_COLORS = {
@@ -18,13 +18,8 @@ export default function HomeScreen() {
   const [patterns, setPatterns] = useState([]);
   const [error, setError] = useState(null);
 
-  // Static Habits for UI Demo
-  const [habits, setHabits] = useState([
-    { id: 1, title: 'Drink 2L Water', done: false },
-    { id: 2, title: 'Read 10 Pages', done: false },
-    { id: 3, title: 'Morning Workout', done: true },
-    { id: 4, title: 'No Social Media before 10 AM', done: true }
-  ]);
+  // Dynamic Habits
+  const [habits, setHabits] = useState([]);
 
   useFocusEffect(
     useCallback(() => {
@@ -34,6 +29,8 @@ export default function HomeScreen() {
           setRules(storedRules);
           const storedPatterns = await getPatterns();
           setPatterns(storedPatterns);
+          const storedHabits = await getHabitStreaks();
+          setHabits(storedHabits);
         } catch(e) {
           setError(e.message);
         }
@@ -43,13 +40,18 @@ export default function HomeScreen() {
   );
 
   const toggleHabit = (id) => {
-    setHabits(habits.map(h => h.id === id ? { ...h, done: !h.done } : h));
+    // Habits are logged via Alter Ego or Quick Capture. Toggling here isn't supported yet, 
+    // but we can add optimistic UI or leave it view-only since Alter Ego tracks it.
+    // Let's leave it view only for now since tracking is dynamic.
   };
 
   const renderRuleItem = (item) => (
-    <View key={item._id} style={styles.ruleCard}>
+    <View key={item._id} style={[styles.ruleCard, item.isRecommended && { borderColor: '#FF2D55', borderWidth: 1 }]}>
       <View style={styles.cardHeader}>
-        <Text style={styles.ruleTitle}>{item.title}</Text>
+        <View style={{flexDirection: 'row', alignItems: 'center', flex: 1}}>
+          {item.isRecommended && <Ionicons name="flash" size={16} color="#FF2D55" style={{marginRight: 6}} />}
+          <Text style={[styles.ruleTitle, item.isRecommended && {color: '#FF2D55'}]}>{item.title}</Text>
+        </View>
         <View style={[styles.tag, { backgroundColor: CATEGORY_COLORS[item.category || 'General'] || CATEGORY_COLORS['General'] }]}>
           <Text style={styles.tagText}>{item.category || 'General'}</Text>
         </View>
@@ -74,23 +76,39 @@ export default function HomeScreen() {
           <Text style={styles.sectionTitle}>Daily Habits</Text>
         </View>
         <View style={styles.habitsContainer}>
-          {habits.map(habit => (
-            <TouchableOpacity 
-              key={habit.id} 
-              style={[styles.habitCard, habit.done && styles.habitCardDone]} 
-              onPress={() => toggleHabit(habit.id)}
-              activeOpacity={0.7}
-            >
-              <Ionicons 
-                name={habit.done ? "checkmark-circle" : "ellipse-outline"} 
-                size={24} 
-                color={habit.done ? "#34C759" : "#666"} 
-              />
-              <Text style={[styles.habitText, habit.done && styles.habitTextDone]}>
-                {habit.title}
-              </Text>
-            </TouchableOpacity>
-          ))}
+          {habits.length === 0 ? (
+            <Text style={[styles.emptyText, {padding: 16}]}>No habits tracked yet. The Alter Ego will monitor them.</Text>
+          ) : (
+            habits.map(habit => (
+              <View 
+                key={habit.id} 
+                style={[styles.habitCard, habit.doneToday && styles.habitCardDone]} 
+              >
+                <Ionicons 
+                  name={habit.doneToday ? "checkmark-circle" : "ellipse-outline"} 
+                  size={24} 
+                  color={habit.doneToday ? "#34C759" : "#666"} 
+                />
+                <View style={{flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
+                  <Text style={[styles.habitText, habit.doneToday && styles.habitTextDone]}>
+                    {habit.title}
+                  </Text>
+                  
+                  {habit.type === 'good' ? (
+                    <View style={styles.streakBadge}>
+                      <Text style={styles.streakEmoji}>🔥</Text>
+                      <Text style={styles.streakText}>{habit.currentStreak} Day{habit.currentStreak !== 1 && 's'}</Text>
+                    </View>
+                  ) : (
+                    <View style={styles.shieldBadge}>
+                      <Text style={styles.shieldEmoji}>🛡️</Text>
+                      <Text style={styles.shieldText}>{habit.daysClean} Clean</Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+            ))
+          )}
         </View>
       </View>
 
@@ -160,4 +178,10 @@ const styles = StyleSheet.create({
   ruleDescription: { color: '#cccccc', fontSize: 14, lineHeight: 20 },
   
   emptyText: { color: '#666', fontSize: 15, fontStyle: 'italic' },
+  streakBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#4a2511', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 },
+  streakEmoji: { fontSize: 12, marginRight: 4 },
+  streakText: { color: '#ff9500', fontWeight: 'bold', fontSize: 12 },
+  shieldBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#1a3a2a', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 },
+  shieldEmoji: { fontSize: 12, marginRight: 4 },
+  shieldText: { color: '#34c759', fontWeight: 'bold', fontSize: 12 },
 });

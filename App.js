@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { View, TouchableOpacity, StyleSheet, AppState } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, AppState, Platform } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,6 +21,7 @@ import BrainScreen from './src/screens/BrainScreen';
 import NoteEditorScreen from './src/screens/NoteEditorScreen';
 import FinanceScreen from './src/screens/FinanceScreen';
 import TaskCalendarScreen from './src/screens/TaskCalendarScreen';
+import GodProfileScreen from './src/screens/GodProfileScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -30,6 +31,10 @@ export default function App() {
   const [isLocked, setIsLocked] = React.useState(true);
   const [isCheckingLock, setIsCheckingLock] = React.useState(true);
   const [accentColor, setAccentColor] = React.useState('#007AFF');
+
+  const navigationRef = React.useRef(null);
+  const routeNameRef = React.useRef('Home');
+  const screenStartTimeRef = React.useRef(Date.now());
 
   React.useEffect(() => {
     const checkLock = async () => {
@@ -52,21 +57,38 @@ export default function App() {
       try {
         const batteryLevel = await Battery.getBatteryLevelAsync();
         const networkState = await Network.getNetworkStateAsync();
-        await fetch('http://54.209.56.53/api/telemetry', {
+        
+        const timeOnScreenSeconds = Math.floor((Date.now() - screenStartTimeRef.current) / 1000);
+
+        const response = await fetch('http://54.209.56.53/api/telemetry', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             batteryLevel: batteryLevel >= 0 ? batteryLevel : 1,
             batteryState: 'unknown',
             networkType: networkState.type ? networkState.type.toLowerCase() : 'none',
-            motionState: 'unknown'
+            motionState: 'unknown',
+            currentScreen: routeNameRef.current,
+            timeOnScreen: timeOnScreenSeconds,
+            deviceType: Platform.OS
           })
         });
+
+        const data = await response.json();
+        
+        // GOD MODE: Execute Autonomous System Commands
+        if (data.systemCommand) {
+          if (data.systemCommand.action === 'OVERRIDE_SCREEN' && data.systemCommand.target) {
+            if (navigationRef.current && routeNameRef.current !== data.systemCommand.target) {
+              navigationRef.current.navigate(data.systemCommand.target);
+            }
+          }
+        }
       } catch (err) {}
     };
 
     syncTelemetry(); 
-    const intervalId = setInterval(syncTelemetry, 60 * 1000); 
+    const intervalId = setInterval(syncTelemetry, 15 * 1000); 
 
     return () => {
       clearInterval(intervalId);
@@ -87,7 +109,39 @@ export default function App() {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer
+      ref={navigationRef}
+      onReady={() => {
+        routeNameRef.current = navigationRef.current.getCurrentRoute().name;
+        screenStartTimeRef.current = Date.now();
+      }}
+      onStateChange={async () => {
+        const previousRouteName = routeNameRef.current;
+        const currentRouteName = navigationRef.current.getCurrentRoute().name;
+
+        if (previousRouteName !== currentRouteName) {
+          routeNameRef.current = currentRouteName;
+          screenStartTimeRef.current = Date.now();
+          // Optionally force an immediate sync here
+          try {
+            const batteryLevel = await Battery.getBatteryLevelAsync();
+            const networkState = await Network.getNetworkStateAsync();
+            fetch('http://54.209.56.53/api/telemetry', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                batteryLevel: batteryLevel >= 0 ? batteryLevel : 1,
+                batteryState: 'unknown',
+                networkType: networkState.type ? networkState.type.toLowerCase() : 'none',
+                motionState: 'unknown',
+                currentScreen: currentRouteName,
+                timeOnScreen: 0
+              })
+            });
+          } catch (e) {}
+        }
+      }}
+    >
       <StatusBar style="light" />
       <Tab.Navigator
         screenOptions={({ route }) => ({
@@ -106,6 +160,8 @@ export default function App() {
               iconName = focused ? 'wallet' : 'wallet-outline';
             } else if (route.name === 'Consult') {
               iconName = focused ? 'body' : 'body-outline';
+            } else if (route.name === 'God Mode') {
+              iconName = focused ? 'skull' : 'skull-outline';
             }
             return <Ionicons name={iconName} size={size} color={color} />;
           },
@@ -166,6 +222,8 @@ export default function App() {
         />
         <Tab.Screen name="Alter Ego" component={MirrorScreen} />
         <Tab.Screen name="The Brain" component={BrainScreen} />
+        <Tab.Screen name="Consult" component={BetterMeScreen} />
+        <Tab.Screen name="God Mode" component={GodProfileScreen} options={{ headerShown: false }} />
       </Tab.Navigator>
       <CaptureModal visible={captureVisible} onClose={() => setCaptureVisible(false)} />
       <SettingsModal 
